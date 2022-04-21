@@ -1,0 +1,17 @@
+name: haskell-poker
+version: "0.0.0"
+dependencies:
+  - base >=4.9.1.0 && <5
+library:
+  source-dirs: lib
+  ghc-options:
+  - -Wall
+  - -fwarn-tabs
+
+executables:
+  haskell-poker:
+    main: Main.hs
+    source-dirs: app
+
+    dependencies:
+      - haskell-poker
