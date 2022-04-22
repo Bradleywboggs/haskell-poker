@@ -15,3 +15,10 @@ executables:
 
     dependencies:
       - haskell-poker
+tests:
+  haskell-poker-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+      - haskell-poker
+      - hspec
