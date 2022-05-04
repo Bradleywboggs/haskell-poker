@@ -1,6 +1,6 @@
 module Main where
 
-import Data.Poker 
+import           Data.Poker
 
 main :: IO()
 main = print deck

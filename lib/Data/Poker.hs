@@ -2,5 +2,4 @@ module Data.Poker  -- TODO: Limit exported types and functions i.e. (deck, hand,
 (deck)
 where 
 
-import Data.Cards
 import Data.Hand
