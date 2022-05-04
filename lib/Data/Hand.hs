@@ -1,7 +1,7 @@
-module Data.Hand where 
+module Data.Hand where
 
-import qualified Data.List as L
-import Data.Cards (Card (..), Rank(..), Suit(..), isAdjacentRank)
+import           Data.Cards (Card (..), Rank (..), Suit (..), isAdjacentRank)
+import qualified Data.List  as L
 
 data Shuffled
 data Unshuffled
@@ -16,7 +16,7 @@ suits = [Spades, Clubs, Hearts, Diamonds]
 deck :: Deck Unshuffled
 deck = Deck $ [ Card (suit, rank)
               | rank <- ranks
-              , suit <- suits 
+              , suit <- suits
               ]
 
 shuffle :: Deck a -> Deck Shuffled
@@ -48,7 +48,7 @@ data Hand = HighCardHand HighCard Kicker (PlayerCards Sorted5Cards)
           | ThreeOfAKindHand ThreeOfAKind (PlayerCards Sorted5Cards)
           | StraightHand Straight (PlayerCards Sorted5Cards)
           | FlushHand Flush (PlayerCards Sorted5Cards)
-          | FullHouseHand FullHouse Kicker (PlayerCards Sorted5Cards) 
+          | FullHouseHand FullHouse Kicker (PlayerCards Sorted5Cards)
           | FourOfAKindHand FourOfAKind (PlayerCards Sorted5Cards)
           | StraightFlushHand StraightFlush (PlayerCards Sorted5Cards)
           | RoyalFlushHand RoyalFlush (PlayerCards Sorted5Cards)
@@ -72,7 +72,7 @@ newtype ThreeOfAKindRank = ThreeOfAKindRank { getTriadRank :: Rank } deriving (E
 newtype PairRank         = PairRank { getPairRank :: Rank } deriving (Eq, Show, Ord)
 data MatchingCards = PairMatch PairRank
                     | TwoPairMatch PairRank PairRank
-                    | ThreeCardMatch ThreeOfAKindRank 
+                    | ThreeCardMatch ThreeOfAKindRank
                     | FullHouseMatch ThreeOfAKindRank PairRank
                     | FourOfAKindMatch Rank
                     | NoMatches
@@ -92,28 +92,28 @@ infix 6 .:.
 -- cons operator for PendingMatches + Card
 (.:.) :: PendingMatches -> Rank -> PendingMatches
 PendingMatches NoMatches Nothing .:. rank = PendingMatches NoMatches (Just (PendingMatch rank))
-PendingMatches NoMatches (Just pendingMatch) .:. rank = 
-        if getPendingRank pendingMatch == rank 
+PendingMatches NoMatches (Just pendingMatch) .:. rank =
+        if getPendingRank pendingMatch == rank
             then PendingMatches (PairMatch (PairRank rank)) Nothing
             else PendingMatches NoMatches (Just (PendingMatch rank))
 
-PendingMatches pair@(PairMatch pairRank) Nothing .:. rank = 
+PendingMatches pair@(PairMatch pairRank) Nothing .:. rank =
         if getPairRank pairRank == rank then PendingMatches (ThreeCardMatch (ThreeOfAKindRank $ getPairRank pairRank)) Nothing else PendingMatches pair (Just (PendingMatch rank))
 
-PendingMatches triad@(ThreeCardMatch triadRank) Nothing .:. rank = 
+PendingMatches triad@(ThreeCardMatch triadRank) Nothing .:. rank =
     if getTriadRank triadRank == rank then PendingMatches (FourOfAKindMatch rank) Nothing else PendingMatches triad (Just (PendingMatch rank))
 
-PendingMatches twoPair@(TwoPairMatch pair1Rank pair2Rank) Nothing .:. rank = 
+PendingMatches twoPair@(TwoPairMatch pair1Rank pair2Rank) Nothing .:. rank =
     if getPairRank pair2Rank == rank then PendingMatches (FullHouseMatch (ThreeOfAKindRank $ getPairRank pair2Rank) pair1Rank) Nothing else PendingMatches twoPair Nothing
 
 PendingMatches twoPair@(TwoPairMatch _ _) _ .:. _ =  PendingMatches twoPair Nothing
 
-PendingMatches pair@(PairMatch pairRank) (Just (PendingMatch singRank)) .:. rank = 
+PendingMatches pair@(PairMatch pairRank) (Just (PendingMatch singRank)) .:. rank =
     if singRank == rank
         then PendingMatches (TwoPairMatch pairRank (PairRank rank)) Nothing
         else PendingMatches pair (Just (PendingMatch rank))
 
-PendingMatches triad@(ThreeCardMatch triadRank) (Just (PendingMatch singRank)) .:. rank = 
+PendingMatches triad@(ThreeCardMatch triadRank) (Just (PendingMatch singRank)) .:. rank =
     if singRank == rank
         then PendingMatches (FullHouseMatch triadRank (PairRank rank)) Nothing
         else PendingMatches triad Nothing
@@ -122,10 +122,10 @@ PendingMatches four@(FourOfAKindMatch _) _ .:. _ = PendingMatches four Nothing
 PendingMatches fullHouse@(FullHouseMatch _ _) _ .:. _ = PendingMatches fullHouse Nothing
 
 playerCards :: [Card] -> Maybe (PlayerCards Unsorted5Cards)
-playerCards cards = if (length . L.nub) cards /= 5 
-                        then Nothing 
+playerCards cards = if (length . L.nub) cards /= 5
+                        then Nothing
                         else Just (PlayerCards cards)
-        
+
 sortPlayerCards :: PlayerCards a -> PlayerCards Sorted5Cards
 sortPlayerCards (PlayerCards cards) = PlayerCards $ L.sort cards
 
@@ -133,7 +133,7 @@ hand :: PlayerCards Sorted5Cards -> Hand
 hand cards = determineHand (getHandState cards) cards
 
 determineHand :: FinalHandState -> PlayerCards Sorted5Cards -> Hand
-determineHand hs cards 
+determineHand hs cards
     | isRoyalFlush hs = RoyalFlushHand RoyalFlush cards
     | isStraightFlush hs = undefined --StraightFlushHand StraightFlush cards
     | isFourOfAKind hs = undefined
@@ -147,8 +147,8 @@ determineHand hs cards
 
 
 finalizeHandState :: HandState -> FinalHandState
-finalizeHandState hs = FinalHandState flushState straightState matchesState highcard 
-                        where 
+finalizeHandState hs = FinalHandState flushState straightState matchesState highcard
+                        where
                             flushState = if couldBeFlush hs then IsFlush else IsNotFlush
                             straightState = if couldBeStraight hs then IsStraight else IsNotStraight
                             matchesState = unwrapMatches (matches hs)
@@ -159,12 +159,12 @@ getHandState (PlayerCards cards) = finalizeHandState $ L.foldl' buildHS NewHandS
 
 
 buildHS :: HandState -> Card -> HandState
-buildHS NewHandState card@(Card (_, rank)) = 
+buildHS NewHandState card@(Card (_, rank)) =
                 HandState { couldBeFlush = True
                           , couldBeStraight = True
                           , currentHighCard = card
                           , matches = initialMatch .:. rank
-                          , lastSeen = card        
+                          , lastSeen = card
                           }
 
 buildHS HandState { couldBeFlush = flush
@@ -179,13 +179,13 @@ buildHS HandState { couldBeFlush = flush
                       , currentHighCard = if currentHighestRank > currentRank then highCard else currentCard
                       , matches =  currentPendingMatches .:. currentRank
                       , lastSeen = currentCard
-                      }                         
+                      }
 
 
 -- instance Eq Hand where
 --     (==) (HighCardHand highcard kicker _) (HighCardHand highcard' kicker' _) =
 --             (highcard, kicker)  == (highcard', kicker')
---     (==) (PairHand pair kicker _) (PairHand pair' kicker' _)   = 
+--     (==) (PairHand pair kicker _) (PairHand pair' kicker' _)   =
 --             (pair, kicker)      == (pair', kicker')
 --     (==) (TwoPairHand twoPair kicker _) (TwoPairHand twoPair' kicker' _) =
 --             (twoPair, kicker)   == (twoPair', kicker')
@@ -194,10 +194,10 @@ buildHS HandState { couldBeFlush = flush
 --     (==) (Straight highcard _) (Straight highcard' _) =
 --             highcard == highcard'
 --     (==) (Flush highcard _) (Flush highcard' _) =
---             highcard == highcard' 
+--             highcard == highcard'
 --     (==) (FullHouseHand fullhouse _) (FullHouseHand fullhouse' _) =
 --             fullhouse == fullhouse'
---     (==) (FourOfAKindHand quad kicker _) (FourOfAKindHand quad' kicker' _)   = 
+--     (==) (FourOfAKindHand quad kicker _) (FourOfAKindHand quad' kicker' _)   =
 --             (quad, kicker)      == (quad', kicker')
 --     (==) (StraightFlush highcard _) (StraightFlush highcard' _) =
 --            highcard == highcard'
@@ -240,53 +240,53 @@ buildHS HandState { couldBeFlush = flush
 
 -- findKicker :: HighCard -> Card -> Maybe Kicker -> Kicker
 -- findKicker (HighCard h) card Nothing = Kicker card
--- findKicker (HighCard h) k (Just (Kicker k')) =    
+-- findKicker (HighCard h) k (Just (Kicker k')) =
 --         case (compare h k, compare h k', compare k k') of
 --             (EQ, EQ, EQ) -> Kicker k
 --             (GT, EQ, LT) -> Kicker k
 --             (GT, GT, GT) -> Kicker k
---             _            -> Kicker k' 
+--             _            -> Kicker k'
 
-                        
+
 
 hasAceHighCard :: FinalHandState -> Bool
-hasAceHighCard (FinalHandState _ _ _ (HighCard card)) = case card of 
+hasAceHighCard (FinalHandState _ _ _ (HighCard card)) = case card of
             (Card (_, Ace)) -> True
             _               -> False
 
 isRoyalFlush :: FinalHandState -> Bool
 isRoyalFlush hs@(FinalHandState IsFlush IsStraight _ _) = hasAceHighCard hs
-isRoyalFlush _ = False
-                
+isRoyalFlush _                                          = False
+
 isStraightFlush :: FinalHandState -> Bool
 isStraightFlush hs@(FinalHandState IsFlush IsStraight  _ _) = (not . hasAceHighCard) hs
 isStraightFlush _ = False
 
 isFlush :: FinalHandState -> Bool
 isFlush (FinalHandState IsFlush IsNotStraight _ _) = True
-isFlush _  = False
+isFlush _                                          = False
 
 isStraight :: FinalHandState -> Bool
 isStraight (FinalHandState IsNotFlush IsStraight _ _) = True
-isStraight _ = False
+isStraight _                                          = False
 
 isFourOfAKind :: FinalHandState -> Bool
 isFourOfAKind (FinalHandState _ _ (FourOfAKindMatch _) _) = True
-isFourOfAKind _ = False
+isFourOfAKind _                                           = False
 
 isFullHouse :: FinalHandState -> Bool
 isFullHouse (FinalHandState _ _ (FullHouseMatch _ _) _) = True
-isFullHouse _ = False
+isFullHouse _                                           = False
 
 isThreeOfAKind :: FinalHandState -> Bool
 isThreeOfAKind (FinalHandState _ _ (ThreeCardMatch _) _) = True
-isThreeOfAKind _ = False
+isThreeOfAKind _                                         = False
 
 isTwoPair :: FinalHandState -> Bool
-isTwoPair (FinalHandState _ _ (TwoPairMatch _ _) _) = True 
-isTwoPair _ = False
+isTwoPair (FinalHandState _ _ (TwoPairMatch _ _) _) = True
+isTwoPair _                                         = False
 
 isPair :: FinalHandState -> Bool
-isPair (FinalHandState _ _ (PairMatch _) _)= True 
-isPair _  = False
+isPair (FinalHandState _ _ (PairMatch _) _)=True
+isPair _                                    = False
 
