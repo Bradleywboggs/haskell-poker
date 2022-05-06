@@ -25,11 +25,14 @@ data Rank    = Two
              | King
              | Ace deriving (Show, Eq, Ord, Enum)
 
-newtype Card = Card { uncard :: (Suit, Rank) } deriving (Show, Eq)
+newtype Card = Card (Suit, Rank) deriving (Show, Eq)
+
 instance Ord Card where
     compare (Card (_, rank)) (Card (_, rank')) = compare rank rank'
     (<=)    (Card (_, rank)) (Card (_, rank')) = (<=)    rank rank'
 
+getCardRank :: Card -> Rank
+getCardRank (Card (_, rank)) = rank
 
 rankToInt :: Rank -> Int
 rankToInt r = case r of

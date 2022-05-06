@@ -20,6 +20,8 @@ library
   ghc-options: -Wall -fwarn-tabs
   build-depends:
       base >=4.9.1.0 && <5
+    , random
+    , random-shuffle
   default-language: Haskell2010
 
 executable haskell-poker
@@ -31,6 +33,8 @@ executable haskell-poker
   build-depends:
       base >=4.9.1.0 && <5
     , haskell-poker
+    , random
+    , random-shuffle
   default-language: Haskell2010
 
 test-suite haskell-poker-test
@@ -44,4 +48,6 @@ test-suite haskell-poker-test
       base >=4.9.1.0 && <5
     , haskell-poker
     , hspec
+    , random
+    , random-shuffle
   default-language: Haskell2010

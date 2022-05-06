@@ -2,6 +2,8 @@ name: haskell-poker
 version: "0.0.0"
 dependencies:
   - base >=4.9.1.0 && <5
+  - random
+  - random-shuffle
 library:
   source-dirs: lib
   ghc-options:
