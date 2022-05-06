@@ -1,10 +1,10 @@
 module Data.Hand where
 
-import           Data.Cards (Card (..), Rank (..), Suit (..), getCardRank,
-                             isAdjacentRank)
-import qualified Data.List  as L
+import           Data.Cards            (Card (..), Rank (..), Suit (..),
+                                        getCardRank, isAdjacentRank)
+import qualified Data.List             as L
+import           System.Random
 import qualified System.Random.Shuffle as S
-import System.Random
 
 data Shuffled
 data Unshuffled
@@ -25,7 +25,6 @@ deck = Deck $ [ Card (suit, rank)
 shuffle :: Deck a -> Deck Shuffled
 shuffle (Deck cards) = Deck $ S.shuffle' cards 52 (mkStdGen 52)
 
-type PlayerCount = Int
 deal :: Deck Shuffled -> [Card]
 deal (Deck cards) = take 5 cards
 
@@ -33,11 +32,14 @@ data Sorted5Cards
 data Unsorted5Cards
 newtype PlayerCards a = PlayerCards [Card] deriving (Show, Eq)
 
-newtype HighCardRank = HighCardRank Rank deriving (Show, Eq, Ord)
-newtype Kicker = Kicker Rank deriving (Show, Eq, Ord)
+newtype HighCardRank     = HighCardRank Rank deriving (Show, Eq, Ord)
+newtype Kicker           = Kicker Rank deriving (Show, Eq, Ord)
 newtype ThreeOfAKindRank = ThreeOfAKindRank Rank  deriving (Eq, Show, Ord)
 newtype PairRank         = PairRank Rank  deriving (Eq, Show, Ord)
-newtype FourOfAKindRank = FourOfAKindRank Rank deriving (Eq, Show, Ord)
+newtype FourOfAKindRank  = FourOfAKindRank Rank deriving (Eq, Show, Ord)
+newtype PendingMatch     = PendingMatch Rank deriving (Show, Eq)
+
+
 data MatchingCards = PairMatch PairRank
                     | TwoPairMatch PairRank PairRank
                     | ThreeCardMatch ThreeOfAKindRank
@@ -60,17 +62,17 @@ data Hand = HighCard HighCardRank Kicker (PlayerCards Sorted5Cards)
 
 data FlushState = IsFlush | IsNotFlush deriving (Show, Eq)
 data StraightState = IsStraight | IsNotStraight deriving (Show, Eq)
-data HandState = HandState { couldBeFlush        :: !Bool
-                           , couldBeStraight     :: !Bool
-                           , currentHighestRank  :: !Rank
-                           , matches             :: PendingMatches
-                           , lastSeen            :: !Card
-                           }
-                | NewHandState
-                deriving (Show, Eq)
+data HandState = HandState
+                   { couldBeFlush       :: !Bool
+                   , couldBeStraight    :: !Bool
+                   , currentHighestRank :: !Rank
+                   , matches            :: PendingMatches
+                   , lastSeen           :: !Card
+                   }
+               | NewHandState
+  deriving (Show, Eq)
 
 data FinalHandState = FinalHandState FlushState StraightState MatchingCards HighCardRank deriving (Show, Eq)
-newtype PendingMatch = PendingMatch {getPendingRank :: Rank} deriving (Show, Eq)
 data PendingMatches = PendingMatches MatchingCards (Maybe PendingMatch) deriving (Show, Eq)
 
 initialMatch :: PendingMatches
@@ -79,24 +81,15 @@ initialMatch = PendingMatches NoMatches Nothing
 unwrapMatches :: PendingMatches -> MatchingCards
 unwrapMatches (PendingMatches match _) = match
 
-
-type NotKicker = Rank
-isPossibleKicker :: [NotKicker] -> Rank -> Bool
-isPossibleKicker notKickers rank = rank `notElem` notKickers
-
 maximumWhere :: Ord a => (a -> Bool) -> [a] -> a
 maximumWhere f xs = maximum $ filter f xs
-
-
-
-
 
 infix 6 .:.
 -- cons operator for PendingMatches + Card
 (.:.) :: PendingMatches -> Rank -> PendingMatches
 PendingMatches NoMatches Nothing .:. rank = PendingMatches NoMatches (Just (PendingMatch rank))
-PendingMatches NoMatches (Just pendingMatch) .:. rank =
-        if getPendingRank pendingMatch == rank
+PendingMatches NoMatches (Just (PendingMatch pendingMatch)) .:. rank =
+        if pendingMatch == rank
             then PendingMatches (PairMatch (PairRank rank)) Nothing
             else PendingMatches NoMatches (Just (PendingMatch rank))
 
@@ -141,26 +134,26 @@ determineHand (FinalHandState IsFlush IsStraight NoMatches highcardRank) cards =
 determineHand (FinalHandState IsFlush IsNotStraight NoMatches highcardRank) cards = Flush highcardRank cards
 determineHand (FinalHandState IsNotFlush IsStraight NoMatches highcardRank) cards = Straight highcardRank cards
 determineHand (FinalHandState _ _ (FullHouseMatch  three two) _) cards = FullHouse three two cards
-determineHand (FinalHandState _ _ (FourCardMatch rank) _) cards@(PlayerCards cs) = 
-        FourOfAKind rank highcardRank cs
-                where highcardRank = maximumWhere (/= rank) cs
-determineHand (FinalHandState _ _ (TwoPairMatch (PairRank two) (PairRank two')) _) cards@(PlayerCards cs) = 
-        TwoPair two two' (HighCardRank highcardRank) cards
-          where highcardRank = maximumWhere (`notElem` [two, two']) (getCardRank <$> cs) 
-determineHand (FinalHandState _ _ (ThreeCardMatch three@(ThreeOfAKindRank threeRank)) _) cards@(PlayerCards cs) =
+determineHand (FinalHandState _ _ (FourCardMatch (FourOfAKindRank matchRank)) _) cards@(PlayerCards cs) =
+        FourOfAKind (FourOfAKindRank matchRank) (HighCardRank highcardRank) cards
+                where highcardRank = maximumWhere (/= matchRank) (getCardRank <$> cs)
+determineHand (FinalHandState _ _ (TwoPairMatch (PairRank matchRank) (PairRank matchRank')) _) cards@(PlayerCards cs) =
+        TwoPair (PairRank matchRank) (PairRank matchRank') (HighCardRank highcardRank) cards
+          where highcardRank = maximumWhere (`notElem` [matchRank, matchRank']) (getCardRank <$> cs)
+determineHand (FinalHandState _ _ (ThreeCardMatch three@(ThreeOfAKindRank matchRank)) _) cards@(PlayerCards cs) =
          ThreeOfAKind three (HighCardRank highcardRank) (Kicker kicker) cards
-           where 
+           where
                 cardRanks    = getCardRank <$> cs
-                highcardRank = maximumWhere (/= threeRank) cardRanks
-                kicker       = maximumWhere (`notElem` [highcardRank, threeRank]) cardRanks
+                highcardRank = maximumWhere (/= matchRank) cardRanks
+                kicker       = maximumWhere (`notElem` [highcardRank, matchRank]) cardRanks
 
 
-determineHand (FinalHandState _ _ (PairMatch two@(PairRank twoRank)) _) cards@(PlayerCards cs) = 
+determineHand (FinalHandState _ _ (PairMatch two@(PairRank matchRank)) _) cards@(PlayerCards cs) =
         Pair two (HighCardRank highcardRank) (Kicker kicker) cards
-        where 
-            cardRanks    = getCardRank <$> cs 
-            highcardRank = maximumWhere (/= twoRank) cardRanks   
-            kicker       = maximumWhere (`notElem` [twoRank, highcardRank]) cardRanks
+        where
+            cardRanks    = getCardRank <$> cs
+            highcardRank = maximumWhere (/= matchRank) cardRanks
+            kicker       = maximumWhere (`notElem` [matchRank, highcardRank]) cardRanks
 
 determineHand (FinalHandState _ _ _ highcard) cards@(PlayerCards cs) = HighCard highcard kicker cards
         where kicker = Kicker $ (getCardRank <$> cs) !! 3
@@ -171,7 +164,7 @@ finalizeHandState hs = FinalHandState flushState straightState matchesState high
                             flushState = if couldBeFlush hs then IsFlush else IsNotFlush
                             straightState = if couldBeStraight hs then IsStraight else IsNotStraight
                             matchesState = unwrapMatches (matches hs)
-                            highcard = HighCardRank $ currentHighestRank  hs
+                            highcard = HighCardRank $ currentHighestRank hs
 
 getHandState :: PlayerCards Sorted5Cards -> FinalHandState
 getHandState (PlayerCards cards) = finalizeHandState $ L.foldl' buildHS NewHandState cards
@@ -188,14 +181,14 @@ buildHS NewHandState card@(Card (_, rank)) =
 
 buildHS HandState { couldBeFlush = flush
                   , couldBeStraight = straight
-                  , currentHighestRank  = currentHighestRank
+                  , currentHighestRank  = currentHighest
                   , matches = currentPendingMatches
                   , lastSeen = Card (lastSeenSuit, lastSeenRank)
                   }
         currentCard@(Card (currentSuit, currentRank)) =
             HandState { couldBeFlush = flush && lastSeenSuit == currentSuit
                       , couldBeStraight = straight && isAdjacentRank lastSeenRank currentRank
-                      , currentHighestRank  = max currentHighestRank currentRank
+                      , currentHighestRank  = max currentHighest currentRank
                       , matches =  newMatches
                       , lastSeen = currentCard
                       }
@@ -210,7 +203,7 @@ instance Eq Hand where
     (==) (Pair pair highcardRank kicker _) (Pair pair' highcardRank' kicker' _)   =
             (pair, highcardRank, kicker)  == (pair', highcardRank', kicker')
     (==) (TwoPair pairRank1 pairRank1' highcardRank _) (TwoPair pairRank2 pairRank2' highcardRank' _) =
-            (pairRank1, pairRank1', highcardRank)  == (pairRank2, pairRank2, highcardRank')
+            (pairRank1, pairRank1', highcardRank)  == (pairRank2, pairRank2', highcardRank')
     (==) (ThreeOfAKind triad highcardRank kicker _) (ThreeOfAKind triad' highcardRank' kicker' _) =
             (triad, highcardRank, kicker)     == (triad', highcardRank', kicker')
     (==) (Straight highcardRank _) (Straight highcardRank' _) =

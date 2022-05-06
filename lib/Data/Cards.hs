@@ -1,15 +1,6 @@
 module Data.Cards where
 
--- import qualified Data.List as L
-
-data Suit    = Spades | Clubs | Hearts | Diamonds deriving (Show)
-
-instance Eq Suit where
-    (==) Spades Spades     = True
-    (==) Clubs Clubs       = True
-    (==) Hearts Hearts     = True
-    (==) Diamonds Diamonds = True
-    (==) _ _               = False
+data Suit    = Spades | Clubs | Hearts | Diamonds deriving (Show, Eq)
 
 data Rank    = Two
              | Three
@@ -29,7 +20,6 @@ newtype Card = Card (Suit, Rank) deriving (Show, Eq)
 
 instance Ord Card where
     compare (Card (_, rank)) (Card (_, rank')) = compare rank rank'
-    (<=)    (Card (_, rank)) (Card (_, rank')) = (<=)    rank rank'
 
 getCardRank :: Card -> Rank
 getCardRank (Card (_, rank)) = rank

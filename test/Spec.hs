@@ -4,30 +4,30 @@ import           Test.Hspec
 
 royalFlushCards = [Card (Clubs, Jack), Card (Clubs, Ten), Card (Clubs, Ace), Card (Clubs, Queen), Card (Clubs, King)]
 sortedRoyalFlushCards = [Card (Clubs, Ten), Card (Clubs, Jack), Card (Clubs, Queen), Card (Clubs, King), Card (Clubs, Ace)]
-royalFlushIntermediateState = HandState {couldBeFlush = True, couldBeStraight = True, currentHighCard = Card (Clubs,Ace), matches = PendingMatches NoMatches Nothing, lastSeen = Card(Clubs,Ace)}
-royalFlushHandState = FinalHandState IsFlush IsStraight NoMatches (HighCard (Card (Clubs, Ace)))
+royalFlushIntermediateState = HandState {couldBeFlush = True, couldBeStraight = True, currentHighestRank = Two, matches = PendingMatches NoMatches Nothing, lastSeen = Card(Clubs,Ace)}
+royalFlushHandState = FinalHandState IsFlush IsStraight NoMatches (HighCardRank  Ace)
 
 
 straightFlushCards = [Card (Hearts, Three), Card (Hearts, Five), Card (Hearts, Six), Card (Hearts, Four), Card (Hearts, Two) ]
 sortedStraightFlushCards = [Card (Hearts, Two), Card (Hearts, Three), Card (Hearts, Four), Card (Hearts, Five), Card (Hearts, Six)]
-straightFlushIntermediateHandState = HandState {couldBeFlush = True, couldBeStraight = True, currentHighCard = Card (Clubs, Nine), matches = PendingMatches NoMatches (Just (PendingMatch Nine)) , lastSeen = Card (Clubs, Nine)}
-straightFlushHandState = FinalHandState IsFlush IsStraight NoMatches (HighCard (Card (Clubs, Nine)))
+straightFlushIntermediateHandState = HandState {couldBeFlush = True, couldBeStraight = True, currentHighestRank = Nine, matches = PendingMatches NoMatches (Just (PendingMatch Nine)) , lastSeen = Card (Clubs, Nine)}
+straightFlushHandState = FinalHandState IsFlush IsStraight NoMatches (HighCardRank  Nine)
 
-straightIntermediateHandState = HandState {couldBeFlush = False, couldBeStraight = True, currentHighCard = Card (Clubs, Nine), matches = PendingMatches NoMatches (Just (PendingMatch Nine)) , lastSeen = Card (Clubs, Nine)}
-straightHandState = FinalHandState IsNotFlush IsStraight NoMatches (HighCard (Card (Clubs, Nine)))
+straightIntermediateHandState = HandState {couldBeFlush = False, couldBeStraight = True, currentHighestRank = Nine, matches = PendingMatches NoMatches (Just (PendingMatch Nine)) , lastSeen = Card (Clubs, Nine)}
+straightHandState = FinalHandState IsNotFlush IsStraight NoMatches (HighCardRank  Nine)
 
-flushHandIntermediateHandState = HandState {couldBeFlush = True, couldBeStraight = False, currentHighCard = Card (Clubs, Nine), matches = PendingMatches NoMatches (Just (PendingMatch Nine)) , lastSeen = Card (Clubs, Nine)}
-flushHandState = FinalHandState IsFlush IsNotStraight NoMatches (HighCard (Card (Clubs, Nine)))
+flushHandIntermediateHandState = HandState {couldBeFlush = True, couldBeStraight = False, currentHighestRank = Nine, matches = PendingMatches NoMatches (Just (PendingMatch Nine)) , lastSeen = Card (Clubs, Nine)}
+flushHandState = FinalHandState IsFlush IsNotStraight NoMatches (HighCardRank  Nine)
 
-pairHandState = FinalHandState IsNotFlush IsNotStraight (PairMatch (PairRank Three)) (HighCard (Card (Hearts, Queen)))
+pairHandState = FinalHandState IsNotFlush IsNotStraight (PairMatch (PairRank Three)) (HighCardRank Queen)
 
-twoPairHandState = FinalHandState IsNotFlush IsNotStraight (TwoPairMatch (PairRank Three) (PairRank Six)) (HighCard (Card (Hearts, Queen)))
+twoPairHandState = FinalHandState IsNotFlush IsNotStraight (TwoPairMatch (PairRank Three) (PairRank Six)) (HighCardRank Queen)
 
-threeOfAKindHandState = FinalHandState IsNotFlush IsNotStraight (ThreeCardMatch (ThreeOfAKindRank Eight)) (HighCard (Card (Hearts, Queen)))
+threeOfAKindHandState = FinalHandState IsNotFlush IsNotStraight (ThreeCardMatch (ThreeOfAKindRank Eight)) (HighCardRank Queen)
 
-fourOfAKindHandState = FinalHandState IsNotFlush IsNotStraight (FourOfAKindMatch Eight) (HighCard (Card (Hearts, Queen)))
+fourOfAKindHandState = FinalHandState IsNotFlush IsNotStraight (FourCardMatch (FourOfAKindRank Eight)) (HighCardRank Queen)
 
-fullHouseHandState = FinalHandState IsNotFlush IsNotStraight (FullHouseMatch (ThreeOfAKindRank Eight) (PairRank Ace)) (HighCard (Card (Hearts, Ace)))
+fullHouseHandState = FinalHandState IsNotFlush IsNotStraight (FullHouseMatch (ThreeOfAKindRank Eight) (PairRank Ace)) (HighCardRank Ace)
 
 
 
@@ -83,7 +83,7 @@ main = hspec $ do
         PendingMatches (ThreeCardMatch (ThreeOfAKindRank Two)) Nothing .:.  Three `shouldBe` PendingMatches (ThreeCardMatch (ThreeOfAKindRank Two)) ( Just (PendingMatch Three))
       -- ThreeCardMatch Nothing, input rank doesn't match
       it "creates a PendingMatches FourOfAKind Nothing if the existing ThreeCardMatch rank is equal to the input card rank" $
-        PendingMatches (ThreeCardMatch (ThreeOfAKindRank Two)) Nothing .:.  Two `shouldBe` PendingMatches (FourOfAKindMatch Two) Nothing
+        PendingMatches (ThreeCardMatch (ThreeOfAKindRank Two)) Nothing .:.  Two `shouldBe` PendingMatches (FourCardMatch (FourOfAKindRank Two)) Nothing
       -- ThreeCardMatch Just, input rank matches pending rank
       it "creates a FullHouseMatch from PendingMatches ThreeOfAKind (Just PendingMatch) if input card rank matches PendingMatch " $
         PendingMatches (ThreeCardMatch (ThreeOfAKindRank Two)) (Just (PendingMatch Seven)) .:.  Seven `shouldBe` PendingMatches (FullHouseMatch (ThreeOfAKindRank Two) (PairRank Seven)) Nothing
@@ -98,12 +98,12 @@ main = hspec $ do
       it "always returns existing PendingMatches if existing is PendingMatches (FullHouseMatch _ _) _ (Just)" $
         PendingMatches (FullHouseMatch (ThreeOfAKindRank Three) (PairRank Eight)) (Just (PendingMatch Seven)) .:.  Ace `shouldBe`  PendingMatches (FullHouseMatch (ThreeOfAKindRank Three) (PairRank Eight)) Nothing
 
-      -- FourOfAKindMatch Nothing, any input rank
-      it "always returns existing PendingMatches if existing is PendingMatches  (FourOfAKindMatch _) _ (Nothing)" $
-        PendingMatches (FourOfAKindMatch Three) Nothing .:.  Eight `shouldBe`  PendingMatches (FourOfAKindMatch Three) Nothing
+      -- FourCardMatch Nothing, any input rank
+      it "always returns existing PendingMatches if existing is PendingMatches  (FourCardMatch _) _ (Nothing)" $
+        PendingMatches (FourCardMatch (FourOfAKindRank Three)) Nothing .:.  Eight `shouldBe`  PendingMatches (FourCardMatch (FourOfAKindRank Three)) Nothing
       -- FourOfAkIndMatch Just, any input rank
-      it "always returns existing PendingMatches if existing is PendingMatches  (FourOfAKindMatch _) _ (Just)" $
-        PendingMatches (FourOfAKindMatch Three) (Just (PendingMatch Eight)) .:.  Eight `shouldBe`  PendingMatches (FourOfAKindMatch Three) Nothing
+      it "always returns existing PendingMatches if existing is PendingMatches  (FourCardMatch _) _ (Just)" $
+        PendingMatches (FourCardMatch (FourOfAKindRank Three)) (Just (PendingMatch Eight)) .:.  Eight `shouldBe`  PendingMatches (FourCardMatch (FourOfAKindRank Three)) Nothing
 
     describe "buildHS (builds HandState from existing handstate (can be empty or 'NewHandState') and a card" $ do
       it "creates initial HandState from NewHandState and single card" $
@@ -111,14 +111,14 @@ main = hspec $ do
         `shouldBe`
         HandState { couldBeFlush = True
                   , couldBeStraight = True
-                  , currentHighCard = Card (Hearts,Eight)
+                  , currentHighestRank = Eight
                   , matches = PendingMatches NoMatches (Just (PendingMatch Eight))
                   , lastSeen = Card (Hearts, Eight)
                   }
       it "updates existing HandState with a new card: same suit, non adjacent rank " $
         buildHS HandState { couldBeFlush = True
                           , couldBeStraight = True
-                          , currentHighCard = Card (Hearts, Eight)
+                          , currentHighestRank = Eight
                           , matches = PendingMatches NoMatches (Just (PendingMatch Eight))
                           , lastSeen = Card (Hearts, Eight)
                           }
@@ -126,14 +126,14 @@ main = hspec $ do
           `shouldBe`
           HandState { couldBeFlush = True
                     , couldBeStraight = False
-                    , currentHighCard = Card (Hearts, Jack)
+                    , currentHighestRank = Jack
                     , matches = PendingMatches NoMatches (Just (PendingMatch Jack))
                     , lastSeen = Card (Hearts, Jack)
                     }
       it "updates existing HandState with a new card: same suit, adjacent rank " $
         buildHS HandState { couldBeFlush = True
                           , couldBeStraight = True
-                          , currentHighCard = Card (Hearts, Eight)
+                          , currentHighestRank = Eight
                           , matches = PendingMatches NoMatches (Just (PendingMatch Eight))
                           , lastSeen = Card (Hearts, Eight)
                           }
@@ -141,14 +141,14 @@ main = hspec $ do
           `shouldBe`
           HandState { couldBeFlush = True
                     , couldBeStraight = True
-                    , currentHighCard = Card (Hearts, Nine)
+                    , currentHighestRank = Nine
                     , matches = PendingMatches NoMatches (Just (PendingMatch Nine))
                     , lastSeen = Card (Hearts, Nine)
                     }
       it "updates existing HandState with a new card: different suit, adjacent rank " $
         buildHS HandState { couldBeFlush = True
                           , couldBeStraight = True
-                          , currentHighCard = Card (Hearts, Eight)
+                          , currentHighestRank = Eight
                           , matches = PendingMatches NoMatches (Just (PendingMatch Eight))
                           , lastSeen = Card (Hearts, Eight)
                           }
@@ -156,14 +156,14 @@ main = hspec $ do
           `shouldBe`
           HandState { couldBeFlush = False
                     , couldBeStraight = True
-                    , currentHighCard = Card (Clubs, Nine)
+                    , currentHighestRank = Nine
                     , matches = PendingMatches NoMatches (Just (PendingMatch Nine))
                     , lastSeen = Card (Clubs, Nine)
                     }
       it "updates existing HandState with a new card: different suit, non-adjacent rank " $
         buildHS HandState { couldBeFlush = True
                           , couldBeStraight = True
-                          , currentHighCard = Card (Hearts, Eight)
+                          , currentHighestRank = Eight
                           , matches = PendingMatches NoMatches (Just (PendingMatch Eight))
                           , lastSeen = Card (Hearts, Eight)
                           }
@@ -171,14 +171,14 @@ main = hspec $ do
           `shouldBe`
           HandState { couldBeFlush = False
                     , couldBeStraight = False
-                    , currentHighCard = Card (Clubs, Ten)
+                    , currentHighestRank = Ten
                     , matches = PendingMatches NoMatches (Just (PendingMatch Ten))
                     , lastSeen = Card (Clubs, Ten)
                     }
       it "updates existing HandState with a new card: pair " $
         buildHS HandState { couldBeFlush = True
                           , couldBeStraight = True
-                          , currentHighCard = Card (Hearts, Eight)
+                          , currentHighestRank = Eight
                           , matches = PendingMatches NoMatches (Just (PendingMatch Eight))
                           , lastSeen = Card (Hearts, Eight)
                           }
@@ -186,68 +186,10 @@ main = hspec $ do
           `shouldBe`
           HandState { couldBeFlush = False
                     , couldBeStraight = False
-                    , currentHighCard = Card (Clubs, Eight)
+                    , currentHighestRank = Eight
                     , matches = PendingMatches (PairMatch (PairRank Eight)) Nothing
                     , lastSeen = Card (Clubs, Eight)
                     }
     describe "getHandState (building handstate from a sorted, unique group of 5 cards)" $ do
        it "gets royalflush HandState" $
         getHandState <$> (sortPlayerCards <$> playerCards royalFlushCards) `shouldBe`  Just royalFlushHandState
-    describe "isRoyalFlush" $ do
-      it "returns True when FinalHandState indicates RoyalFlush" $
-        isRoyalFlush royalFlushHandState `shouldBe` True
-      it "returns False when FinalHandState doesn't indicate RoyalFlush" $
-        isRoyalFlush straightFlushHandState `shouldBe` False
-    describe "isStraightFlush" $ do
-      it "returns True when FinalHandState indicates StraightFlush" $
-        isStraightFlush straightFlushHandState `shouldBe` True
-      it "returns False when HandState doesn't indicate StraightFlush" $
-        isStraightFlush royalFlushHandState `shouldBe` False
-    describe "isStraight" $ do
-      it "returns True when FinalHandState indicates Straight" $
-        isStraight straightHandState `shouldBe` True
-      it "returns False when FinalHandState doesn't indicate ONLY Straight" $
-        isStraight royalFlushHandState `shouldBe` False
-    describe "isFlush" $ do
-      it "returns True when FinalHandState indicates Flush" $
-        isFlush flushHandState `shouldBe` True
-      it "returns False when FinalHandState doesn't indicate Straight" $
-        isFlush straightFlushHandState `shouldBe` False
-    describe "isPair" $ do
-      it "returns True when FinalHandState indicates Pair" $
-        isPair pairHandState `shouldBe` True
-      it "returns False when FinalHandState doesn't indicate Pair" $
-        isPair straightHandState `shouldBe` False
-    describe "isTwoPair" $ do
-      it "returns True when FinalHandState indicates TwoPair" $
-        isTwoPair twoPairHandState `shouldBe` True
-      it "returns False when FinalHandState doesn't indicate TwoPair" $
-        isTwoPair straightHandState `shouldBe` False
-    describe "isThreeOfAKind" $ do
-      it "returns True when FinalHandState indicates ThreeOfAKind" $
-        isThreeOfAKind threeOfAKindHandState `shouldBe` True
-      it "returns False when FinalHandState doesn't indicate ThreeOfAKind" $
-        isThreeOfAKind straightHandState `shouldBe` False
-    describe "isFourOfAKind" $ do
-      it "returns True when FinalHandState indicates FourOfAKind" $
-        isFourOfAKind fourOfAKindHandState `shouldBe` True
-      it "returns False when FinalHandState doesn't indicate FourOfAKind" $
-        isFourOfAKind straightHandState `shouldBe` False
-    describe "isFullHouse" $ do
-      it "returns True when FinalHandState indicates FullHouse" $
-        isFullHouse fullHouseHandState `shouldBe` True
-      it "returns False when FinalHandState doesn't indicate FullHouse" $
-        isFullHouse straightHandState `shouldBe` False
-    -- describe "Data.Hand (getHand)" $  dostraightFlushHandState = FinalHandState IsFlush IsStraight NoMatches HighCard (Card (Clubs, King))
-        -- describe "findKicker" $ do
-        --     it "sets kicker as max when both are equal to max" $
-        --         findKicker (HighCard (Card (Clubs, Ace))) (Kicker (Card (Clubs, Ace))) (Kicker (Card (Hearts, Ace))) `shouldBe` Kicker (Card (Clubs, Ace))
-        --     it "sets kicker as the lower card when first possible kicker is equal to max" $
-        --         findKicker (HighCard (Card (Clubs, Ace))) (Kicker (Card (Clubs, Ace))) (Kicker (Card (Hearts, Jack))) `shouldBe` Kicker (Card (Hearts, Jack))
-        --     it "sets kicker as the lower card when second possible kicker is equal to max" $
-        --         findKicker (HighCard (Card (Clubs, Ace))) (Kicker (Card (Hearts, Jack))) (Kicker (Card (Hearts, Ace))) `shouldBe` Kicker (Card (Hearts, Jack))
-        --     it "sets kicker as the first of the possible kickers when first is greater than second but both are less than max" $
-        --         findKicker (HighCard (Card (Clubs, Ace))) (Kicker (Card (Hearts, Jack))) (Kicker (Card (Diamonds, Nine))) `shouldBe` Kicker (Card (Hearts, Jack))
-        --     it "sets kicker as the second of the possible kickers when second is greater than first but both are less than max" $
-        --         findKicker (HighCard (Card (Clubs, Ace))) (Kicker (Card (Spades, Eight))) (Kicker (Card (Hearts, Jack))) `shouldBe` Kicker (Card (Hearts, Jack))
-
