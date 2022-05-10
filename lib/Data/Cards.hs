@@ -1,6 +1,12 @@
 module Data.Cards where
 
-data Suit    = Spades | Clubs | Hearts | Diamonds deriving (Show, Eq)
+data Suit    = Spades | Clubs | Hearts | Diamonds deriving (Eq)
+instance Show Suit where
+    show Spades   = "♠️"
+    show Clubs    = "♣️"
+    show Hearts   = "♥️"
+    show Diamonds = "♦️"
+
 
 data Rank    = Two
              | Three
@@ -14,12 +20,37 @@ data Rank    = Two
              | Jack
              | Queen
              | King
-             | Ace deriving (Show, Eq, Ord, Enum)
+             | Ace deriving (Eq, Ord, Enum)
 
-newtype Card = Card (Suit, Rank) deriving (Show, Eq)
+instance Show Rank where
+    show Two   = "2"
+    show Three = "3"
+    show Four  = "4"
+    show Five  = "5"
+    show Six   = "6"
+    show Seven = "7"
+    show Eight = "8"
+    show Nine  = "9"
+    show Ten   = "10"
+    show Jack  = "J"
+    show Queen = "Q"
+    show King  = "K"
+    show Ace   = "A"
+
+
+
+newtype Card = Card (Suit, Rank) deriving (Eq)
+instance Show Card where
+    show (Card (suit, rank)) = "[ "  ++ show rank ++ show suit ++ " ]"
 
 instance Ord Card where
     compare (Card (_, rank)) (Card (_, rank')) = compare rank rank'
+
+ranks :: [Rank]
+ranks = [Two .. Ace]
+
+suits :: [Suit]
+suits = [Spades, Clubs, Hearts, Diamonds]
 
 getCardRank :: Card -> Rank
 getCardRank (Card (_, rank)) = rank
@@ -41,4 +72,7 @@ rankToInt r = case r of
         Ace   -> 14
 
 isAdjacentRank :: Rank -> Rank -> Bool
-isAdjacentRank r r' = abs (rankToInt r - rankToInt r') == 1
+isAdjacentRank r r'
+    | r == Ace && r' == Two = True
+    | r == Two && r' == Ace = True
+    | otherwise             = abs (rankToInt r - rankToInt r') == 1
