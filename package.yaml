@@ -1,7 +1,6 @@
 name: haskell-poker
 version: "0.0.0"
 dependencies:
-  - array
   - base >=4.9.1.0 && <5
   - MonadRandom
   - random
