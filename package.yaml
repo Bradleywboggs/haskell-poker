@@ -6,8 +6,7 @@ dependencies:
   - MonadRandom
   - random
   - random-shuffle
-  - vector
-
+  
 library:
   source-dirs: lib
   ghc-options:
@@ -28,3 +27,4 @@ tests:
     dependencies:
       - haskell-poker
       - hspec
+      - QuickCheck

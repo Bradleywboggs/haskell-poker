@@ -1,4 +1,4 @@
-module Data.PokerHand (deck, deal, toHand, shuffleDeck, toPokerCards, sortPokerCards)
+module Data.PokerHand (Hand(..), PokerCards(..), PossiblePokerCards(..), deck, unwrapDeck, deal, toHand, shuffleDeck, toPokerCards, sortPokerCards)
 where
 
 import           Data.Cards             (Card (..), Rank (..), Suit (..),
@@ -19,6 +19,11 @@ import           System.Random.Shuffle   (shuffleM)
 data Shuffled
 data Unshuffled
 newtype Deck a = Deck [Card] deriving Show
+
+unwrapDeck :: Deck a -> [Card]
+unwrapDeck (Deck cards) = cards
+
+newtype PossiblePokerCards = PossiblePokerCards [Card] deriving Show
 
 data FiveUnsortedCards
 data FiveSortedCards
@@ -64,7 +69,7 @@ instance Show Hand where
 
 instance Eq Hand where
     (==) (HighCard highcardRank kicker _) (HighCard highcardRank' kicker' _) =
-            (highcardRank, kicker)  == (highcardRank', kicker')
+            (highcardRank, kicker) == (highcardRank', kicker')
     (==) (Pair pair highcardRank kicker _) (Pair pair' highcardRank' kicker' _)   =
             (pair, highcardRank, kicker)  == (pair', highcardRank', kicker')
     (==) (TwoPair pairRank1 pairRank1' highcardRank _) (TwoPair pairRank2 pairRank2' highcardRank' _) =
@@ -78,11 +83,11 @@ instance Eq Hand where
     (==) (FullHouse threeRank twoRank _) (FullHouse threeRank' twoRank' _) =
             (threeRank, twoRank) == (threeRank', twoRank')
     (==) (FourOfAKind quad kicker _) (FourOfAKind quad' kicker' _)   =
-            (quad, kicker)      == (quad', kicker')
+            (quad, kicker) == (quad', kicker')
     (==) (StraightFlush highcardRank _) (StraightFlush highcardRank' _) =
            highcardRank == highcardRank'
     (==) (RoyalFlush _) (RoyalFlush _) = True
-    (==) _ _                                                                 = False
+    (==) _ _ = False
 
 instance Ord Hand where
     compare (RoyalFlush _ )(RoyalFlush  _) = EQ
@@ -130,17 +135,16 @@ deck = Deck $ [ Card (suit, rank)
               | rank <- ranks
               , suit <- suits
               ]
-
-shuffleDeck ::  MonadRandom m => Deck Unshuffled -> m (Deck Shuffled)
+shuffleDeck :: MonadRandom m => Deck Unshuffled -> m (Deck Shuffled)
 shuffleDeck (Deck cards) = Deck <$> shuffleM cards
 
-deal :: Deck Shuffled -> ([Card], [Card])
-deal d = deal' d ([], [])
+deal :: Deck Shuffled -> (PossiblePokerCards, PossiblePokerCards)
+deal d = deal' d (PossiblePokerCards [], PossiblePokerCards [])
 
-deal' :: Deck Shuffled -> ([Card], [Card]) -> ([Card], [Card])
-deal' (Deck d) (p, p')
-    | length p >= 5 && length p' == 5 = (p, p')
-    | otherwise                       = deal' (Deck cs) (c: p, c': p')
+deal' :: Deck Shuffled -> (PossiblePokerCards, PossiblePokerCards) -> (PossiblePokerCards, PossiblePokerCards)
+deal' (Deck d) ppc@(PossiblePokerCards p, PossiblePokerCards p')
+    | length p == 5 && length p' == 5 = ppc
+    | otherwise                       = deal' (Deck cs) (PossiblePokerCards (c: p), PossiblePokerCards (c': p'))
     where
         -- use of the head and tail functions in this context is safe
         -- due to Deck Shuffled only being exposed through smart constructors
@@ -149,8 +153,8 @@ deal' (Deck d) (p, p')
         cs = (tail . tail) d
 
 
-toPokerCards :: [Card] -> Maybe (PokerCards FiveUnsortedCards)
-toPokerCards cards = if (length . nub) cards /= 5
+toPokerCards :: PossiblePokerCards -> Maybe (PokerCards FiveUnsortedCards)
+toPokerCards (PossiblePokerCards cards) = if (length . nub) cards /= 5
                         then Nothing
                         else Just (PokerCards cards)
 
@@ -180,15 +184,12 @@ determineHand (FinalHandState _ _ (ThreeCardMatch three@(ThreeOfAKindRank matchR
                 cardRanks    = getCardRank <$> cs
                 highcardRank = maximumWhere (/= matchRank) cardRanks
                 kicker       = maximumWhere (`notElem` [highcardRank, matchRank]) cardRanks
-
-
 determineHand (FinalHandState _ _ (PairMatch two@(PairRank matchRank)) _) cards@(PokerCards cs) =
         Pair two (HighCardRank highcardRank) (Kicker kicker) cards
         where
             cardRanks    = getCardRank <$> cs
             highcardRank = maximumWhere (/= matchRank) cardRanks
             kicker       = maximumWhere (`notElem` [matchRank, highcardRank]) cardRanks
-
 determineHand (FinalHandState _ _ _ highcard) cards@(PokerCards cs) = HighCard highcard kicker cards
         where kicker = Kicker $ (getCardRank <$> cs) !! 3
 

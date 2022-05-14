@@ -25,7 +25,6 @@ library
     , base >=4.9.1.0 && <5
     , random
     , random-shuffle
-    , vector
   default-language: Haskell2010
 
 executable haskell-poker
@@ -41,23 +40,25 @@ executable haskell-poker
     , haskell-poker
     , random
     , random-shuffle
-    , vector
   default-language: Haskell2010
 
 test-suite haskell-poker-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      PokerHandBuilderTest
+      PokerHandTest
+      TestData
       Paths_haskell_poker
   hs-source-dirs:
       test
   build-depends:
       MonadRandom
+    , QuickCheck
     , array
     , base >=4.9.1.0 && <5
     , haskell-poker
     , hspec
     , random
     , random-shuffle
-    , vector
   default-language: Haskell2010
