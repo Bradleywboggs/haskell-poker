@@ -1,6 +1,8 @@
-module Data.Poker  -- TODO: Limit exported types and functions i.e. (deck, hand, etc)
-(deck)
-where 
+module Data.Poker  (shuffleDeck, deck, deal, toHand, sortPokerCards, toPokerCards)
 
-import Data.Cards
-import Data.Hand
+where
+
+import           Data.PokerHand
+
+
+
