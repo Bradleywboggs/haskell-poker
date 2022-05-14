@@ -3,8 +3,8 @@ module Main where
 import           Data.Bifunctor (bimap)
 import           Data.Char      (toLower)
 import           Data.Functor   ((<&>))
-import           Data.Poker     (deal, deck, toHand, toPokerCards, shuffleDeck,
-                                 sortPokerCards)
+import           Data.Poker     (deal, deck, shuffleDeck, sortPokerCards,
+                                 toHand, toPokerCards)
 
 
 playPoker :: IO ()

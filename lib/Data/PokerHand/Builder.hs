@@ -1,6 +1,6 @@
 module Data.PokerHand.Builder where
 
-import Data.Cards (Card(..), Rank(..), isAdjacentRank)
+import           Data.Cards (Card (..), Rank (..), isAdjacentRank)
 
 data HandState = HandState
                    { couldBeFlush       :: !Bool

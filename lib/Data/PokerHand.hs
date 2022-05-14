@@ -13,7 +13,7 @@ import           Data.PokerHand.Builder (FinalHandState (..), FlushState (..),
 
 import           Control.Monad.Random   (MonadRandom)
 import           Data.List              (foldl', nub, sort)
-import           System.Random.Shuffle   (shuffleM)
+import           System.Random.Shuffle  (shuffleM)
 
 
 data Shuffled
@@ -93,15 +93,15 @@ instance Ord Hand where
     compare (RoyalFlush _ )(RoyalFlush  _) = EQ
     compare (RoyalFlush  _) _             = GT
     compare _ (RoyalFlush _) = LT
-    compare (StraightFlush highcardRank _) (StraightFlush highcardRank' _) = 
+    compare (StraightFlush highcardRank _) (StraightFlush highcardRank' _) =
             compare highcardRank highcardRank'
     compare (StraightFlush _ _) _ = GT
     compare _ (StraightFlush _ _) = LT
-    compare (FourOfAKind quad highcardRank _) (FourOfAKind quad' highcardRank' _) = 
+    compare (FourOfAKind quad highcardRank _) (FourOfAKind quad' highcardRank' _) =
             compare (quad, highcardRank) (quad', highcardRank')
     compare FourOfAKind{} _ = GT
     compare _ FourOfAKind{} = LT
-    compare (FullHouse threeRank twoRank _) (FullHouse threeRank' twoRank' _) = 
+    compare (FullHouse threeRank twoRank _) (FullHouse threeRank' twoRank' _) =
             compare (threeRank, twoRank) (threeRank', twoRank')
     compare FullHouse{} _ = GT
     compare _ FullHouse{} = LT
@@ -109,19 +109,19 @@ instance Ord Hand where
              compare highcardRank highcardRank'
     compare (Flush _ _) _ = GT
     compare _ (Flush _ _) = LT
-    compare (Straight highcardRank _) (Straight highcardRank' _) = 
+    compare (Straight highcardRank _) (Straight highcardRank' _) =
             compare highcardRank highcardRank'
     compare (Straight _ _) _ = GT
     compare _ (Straight _ _) = LT
-    compare (ThreeOfAKind triad highcardRank kicker _ ) (ThreeOfAKind triad' highcardRank' kicker' _) = 
+    compare (ThreeOfAKind triad highcardRank kicker _ ) (ThreeOfAKind triad' highcardRank' kicker' _) =
             compare (triad, highcardRank, kicker) (triad', highcardRank', kicker')
     compare ThreeOfAKind{} _ = GT
     compare _ ThreeOfAKind{} = LT
-    compare (TwoPair twoP1 twoP1' highcardRank _) (TwoPair twoP2 twoP2' highcardRank' _) = 
+    compare (TwoPair twoP1 twoP1' highcardRank _) (TwoPair twoP2 twoP2' highcardRank' _) =
             compare (twoP1, twoP1', highcardRank) (twoP2, twoP2', highcardRank')
     compare TwoPair{} _ = GT
     compare _ TwoPair{} = LT
-    compare (Pair pair highcardRank kicker _) (Pair pair' highcardRank' kicker' _) = 
+    compare (Pair pair highcardRank kicker _) (Pair pair' highcardRank' kicker' _) =
             compare (pair, highcardRank, kicker) (pair', highcardRank', kicker')
     compare Pair{} _ = GT
     compare _ Pair{}  = LT
